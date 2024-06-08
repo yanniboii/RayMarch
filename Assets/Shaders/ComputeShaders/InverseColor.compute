@@ -1,0 +1,27 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+Texture2D<float4> Source;
+
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    //InverseColor
+    float3 inverseColor = 1 -Source[id.xy].xyz;
+    Result[id.xy] = float4( inverseColor, 1.0);
+
+    float3 offset = Source[id.xy -0.1].xyz;
+    if(length(Source[id.xy].xyz - offset) > 0.08){
+        //Result[id.xy] = float4(0,0,0,1);
+    }
+    else{
+        //Result[id.xy] = Source[id.xy];
+    }
+}
