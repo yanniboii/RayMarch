@@ -15,6 +15,7 @@ float4x4 _CameraInverseProjection;
 static const float maxDst = 200;
 static const float epsilon = 0.001;
 static const float2 epsilon2 = float2(epsilon,0);
+
 float smoothing;
 
 
@@ -41,6 +42,10 @@ struct Triangle{
     float3 vertex2;
     float3 vertex3;
     float3 color;
+};
+
+struct Light{
+    float3 position;
 };
 
 /*struct Mesh{
@@ -208,9 +213,9 @@ float4 SDFScene(float3 pos){
 //Ligthing
 //////////////////////////////////////////////////////////////////////////////////////////////
 float3 computeNormal(float3 pos){
-    return normalize(float3(SDFScene(pos-epsilon2.xyy).w,
-                            SDFScene(pos-epsilon2.yxy).w,
-                            SDFScene(pos-epsilon2.yyx).w));
+    return normalize(float3(SDFScene(pos+epsilon2.xyy).w - SDFScene(pos-epsilon2.xyy).w,
+                            SDFScene(pos+epsilon2.yxy).w - SDFScene(pos-epsilon2.yxy).w,
+                            SDFScene(pos+epsilon2.yyx).w - SDFScene(pos-epsilon2.yyx).w));
 }
 
 

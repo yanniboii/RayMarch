@@ -36,6 +36,10 @@ public class RayMarchingMaster : MonoBehaviour
         _camera = GetComponent<Camera>();
     }
 
+    public void SliderValue(float value)
+    {
+        smoothing = value;
+    }
 
     void CreateScene()
     {
