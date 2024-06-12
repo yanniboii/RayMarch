@@ -12,7 +12,7 @@ float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
 
 
-static const float maxDst = 200;
+static const float maxDst = 80;
 static const float epsilon = 0.001;
 static const float2 epsilon2 = float2(epsilon,0);
 
@@ -218,6 +218,14 @@ float3 computeNormal(float3 pos){
                             SDFScene(pos+epsilon2.yyx).w - SDFScene(pos-epsilon2.yyx).w));
 }
 
+float3 compNormT(float3 pos){
+    float pos2 = SDFScene(pos).w;
+    float3 pos3 =float3(SDFScene(pos-epsilon2.xyy).w,
+                        SDFScene(pos-epsilon2.yxy).w,
+                        SDFScene(pos-epsilon2.yyx).w);
+return normalize(pos2 - pos3);
+}
+
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -231,17 +239,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float rayDst = 0;
 
     Ray ray = CreateCameraRay(uv);
-    int marchSteps = 0;
 
     while (rayDst < maxDst) {
-        marchSteps ++;
         float4 sceneInfo = SDFScene(ray.origin);
         float dst = sceneInfo.w;
         
         float3 pointOnSurface = ray.origin + ray.direction *dst;
 
-        float3 normal = computeNormal(pointOnSurface);
-
+        //float3 normal = computeNormal(pointOnSurface-ray.direction*epsilon);
+        float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
         if (dst <= epsilon) {
             float3 col = sceneInfo.xyz;
 
