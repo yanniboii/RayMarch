@@ -17,6 +17,9 @@ static const float epsilon = 0.001;
 static const float2 epsilon2 = float2(epsilon,0);
 
 float smoothing;
+float ambientIntensity;
+float diffuseIntensity;
+float specularIntensity;
 
 
 struct SDFResult {
@@ -47,6 +50,8 @@ struct Triangle{
 struct Light{
     float3 position;
 };
+
+const float3 light = float3(-2,4,-2);
 
 /*struct Mesh{
     float3 position;
@@ -226,8 +231,7 @@ float3 compNormT(float3 pos){
 return normalize(pos2 - pos3);
 }
 
-
-[numthreads(8,8,1)]
+[numthreads(32,32,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint width,height;
@@ -247,11 +251,28 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float3 pointOnSurface = ray.origin + ray.direction *dst;
 
         //float3 normal = computeNormal(pointOnSurface-ray.direction*epsilon);
-        float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
         if (dst <= epsilon) {
             float3 col = sceneInfo.xyz;
+            float3 ambientColor = col * ambientIntensity;
+            float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
 
-            Result[id.xy] = float4(normal,1);
+
+            float3 lightDir = normalize(light - pointOnSurface);
+
+            float diff = max(dot(normalize(lightDir), normal), 0.0); // diffuse term intesity
+
+            float3 diffuse = diffuseIntensity * diff * float3(0,1,0) * float3(1,1,1);
+
+            float3 viewDir = normalize(ray.origin - pointOnSurface);
+            float3 reflectDir = reflect(-normalize(lightDir),normal);
+            float spec = pow(max(dot(viewDir,reflectDir),0.0),specularIntensity); // specular term dot is the cosine of the angle specular intesity is the shininess shininess changes the frequency of the cosine
+            float3 specular =  spec * float3(0,1,0) * float3(1,0,1);
+            float3 Ligthing = ambientColor;
+            Ligthing += (diffuse+ specular);
+
+
+
+            Result[id.xy] = float4(Ligthing,1);
 
             break;
         }

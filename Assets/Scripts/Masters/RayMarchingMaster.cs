@@ -10,6 +10,9 @@ public class RayMarchingMaster : MonoBehaviour
     [SerializeField] ComputeShader m_ComputeShader;
     [Range(-0.5f,0.5f)]
     [SerializeField] float smoothing;
+    [SerializeField] float ambientIntensity;
+    [SerializeField] float diffuseIntensity;
+    [SerializeField] float specularIntensity;
 
     private RenderTexture renderTexture;
     private Camera _camera;
@@ -69,6 +72,9 @@ public class RayMarchingMaster : MonoBehaviour
         deleteComputeBuffers.Add(trianlgeBuffer);
 
 
+        m_ComputeShader.SetFloat("ambientIntensity", ambientIntensity);
+        m_ComputeShader.SetFloat("diffuseIntensity", diffuseIntensity);
+        m_ComputeShader.SetFloat("specularIntensity", specularIntensity);
         m_ComputeShader.SetFloat("smoothing", smoothing);
 
         Light[] lights = Light.GetLights(LightType.Directional, 0);
@@ -83,10 +89,10 @@ public class RayMarchingMaster : MonoBehaviour
 
     Sphere[] GenerateRandomSpheres()
     {
-        Sphere[] spheres = new Sphere[6];
+        Sphere[] spheres = new Sphere[15];
         for (int i = 0; i < spheres.Length - 1; i++)
         {
-            spheres[i].position = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+            spheres[i].position = new Vector3(Random.Range(0f, 10f), Random.Range(0f, 10f), Random.Range(0f, 10f));
             spheres[i].radius = Random.Range(0, 0.1f);
             spheres[i].color = new Vector3(Random.Range(0,1f), Random.Range(0, 1f), Random.Range(0, 1f));
             Debug.Log(spheres[i].position + " : " + spheres[i].radius + " : " + spheres[i].color);
@@ -95,10 +101,10 @@ public class RayMarchingMaster : MonoBehaviour
     }
     Cube[] GenerateRandomCubes()
     {
-        Cube[] cubes = new Cube[8];
+        Cube[] cubes = new Cube[20];
         for (int i = 0; i < cubes.Length - 1; i++)
         {
-            cubes[i].position = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+            cubes[i].position = new Vector3(Random.Range(0f, 10f), Random.Range(0f, 10f), Random.Range(0f, 10f));
             cubes[i].bounds = new Vector3(Random.Range(0.1f, 2f), Random.Range(0.1f, 2f), Random.Range(0.1f, 2f));
             cubes[i].color = new Vector3(Random.Range(0, 1f), Random.Range(0, 1f), Random.Range(0, 1f));
             Debug.Log(cubes[i].position + " : " + cubes[i].bounds + " : " + cubes[i].bounds);
@@ -172,8 +178,8 @@ public class RayMarchingMaster : MonoBehaviour
 
         m_ComputeShader.SetTexture(0, "Result", renderTexture);
 
-        int threadGroupsX = Mathf.CeilToInt(_camera.pixelWidth / 8.0f);
-        int threadGroupsY = Mathf.CeilToInt(_camera.pixelHeight / 8.0f);
+        int threadGroupsX = Mathf.CeilToInt(_camera.pixelWidth / 32.0f);
+        int threadGroupsY = Mathf.CeilToInt(_camera.pixelHeight / 32.0f);
         m_ComputeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
         // Display the result texture
