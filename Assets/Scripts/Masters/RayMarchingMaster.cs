@@ -14,6 +14,8 @@ public class RayMarchingMaster : MonoBehaviour
     [SerializeField] float ambientIntensity;
     [SerializeField] float diffuseIntensity;
     [SerializeField] float specularIntensity;
+    [SerializeField] bool hasLight;
+    [SerializeField] bool showDepth;
 
     float speed = 0.001f;
 
@@ -82,6 +84,10 @@ public class RayMarchingMaster : MonoBehaviour
         deleteComputeBuffers.Add(trianlgeBuffer);
 
 
+        m_ComputeShader.SetBool("hasLight", hasLight);
+        m_ComputeShader.SetBool("showDepth", showDepth);
+
+
         m_ComputeShader.SetFloat("ambientIntensity", ambientIntensity);
         m_ComputeShader.SetFloat("diffuseIntensity", diffuseIntensity);
         m_ComputeShader.SetFloat("specularIntensity", specularIntensity);
@@ -105,7 +111,6 @@ public class RayMarchingMaster : MonoBehaviour
             spheres[i].position = new Vector3(Random.Range(0f, 10f), Random.Range(0f, 10f), Random.Range(0f, 10f));
             spheres[i].radius = Random.Range(0, 0.1f);
             spheres[i].color = new Vector3(Random.Range(0,1f), Random.Range(0, 1f), Random.Range(0, 1f));
-            Debug.Log(spheres[i].position + " : " + spheres[i].radius + " : " + spheres[i].color);
         }
         return spheres;
     }
@@ -117,7 +122,6 @@ public class RayMarchingMaster : MonoBehaviour
             cubes[i].position = new Vector3(Random.Range(0f, 10f), Random.Range(0f, 10f), Random.Range(0f, 10f));
             cubes[i].bounds = new Vector3(Random.Range(0.1f, 2f), Random.Range(0.1f, 2f), Random.Range(0.1f, 2f));
             cubes[i].color = new Vector3(Random.Range(0, 1f), Random.Range(0, 1f), Random.Range(0, 1f));
-            Debug.Log(cubes[i].position + " : " + cubes[i].bounds + " : " + cubes[i].bounds);
         }
         return cubes;
     }

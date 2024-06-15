@@ -18,6 +18,9 @@ static const float maxDst = 80;
 static const float epsilon = 0.001;
 static const float2 epsilon2 = float2(epsilon,0);
 
+bool hasLight;
+bool showDepth;
+
 float smoothing;
 float ambientIntensity;
 float diffuseIntensity;
@@ -195,6 +198,7 @@ float4 SDFScene(float3 pos){
         float distanceToSphere = SDFSphere(pos, sphere.position, sphere.radius);
         
         sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToSphere, sphere.color, smoothing);
+        
     }
 
     for(int j = 0; j < _NumCubes; j++) {
@@ -202,7 +206,7 @@ float4 SDFScene(float3 pos){
         float distanceToCube = SDFBox(pos - cube.position,cube.bounds);
         
         sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToCube, cube.color, smoothing);
-    }
+   }
 
     for(int k = 0; k < _NumTriangles; k++){
         Triangle tr = Triangles[k];
@@ -234,6 +238,28 @@ float3 compNormT(float3 pos){
 return normalize(pos2 - pos3);
 }
 
+float3 ADS(Ray ray, float dst, float3 col){
+        float3 pointOnSurface = ray.origin + ray.direction *dst;
+
+        float3 ambientColor = col * ambientIntensity;
+        float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
+
+
+        float3 lightDir = normalize(light - pointOnSurface);
+
+        float diff = max(dot(normalize(lightDir), normal), 0.0); // diffuse term intesity
+
+        float3 diffuse = diffuseIntensity * diff * float3(1,1,1) * float3(1,1,1);
+
+        float3 viewDir = normalize(ray.origin - pointOnSurface);
+        float3 reflectDir = reflect(-normalize(lightDir),normal);
+        float spec = pow(max(dot(viewDir,reflectDir),0.0),specularIntensity); // specular term dot is the cosine of the angle specular intesity is the shininess shininess changes the frequency of the cosine
+        float3 specular =  spec * float3(0,1,0) * float3(1,0,1);
+        float3 Ligthing = ambientColor;
+        Ligthing += (diffuse +specular);
+        return Ligthing;
+}
+
 [numthreads(32,32,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
@@ -242,8 +268,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float depth = _DepthTexture.Load(int3(id.xy,0));
 
-    //Result[id.xy] = Source[id.xy];
-    Result[id.xy] = float4(depth.xxx,1);
+    Result[id.xy] = Source[id.xy];
+    //Result[id.xy] = float4(depth.xxx,1);
     float2 uv = id.xy / float2(width,height) * 2 - 1;
     float rayDst = 0;
 
@@ -253,30 +279,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float4 sceneInfo = SDFScene(ray.origin);
         float dst = sceneInfo.w;
         
-        float3 pointOnSurface = ray.origin + ray.direction *dst;
-
-        //float3 normal = computeNormal(pointOnSurface-ray.direction*epsilon);
         if (dst <= epsilon) {
             float3 col = sceneInfo.xyz;
-            float3 ambientColor = col * ambientIntensity;
-            float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
 
-
-            float3 lightDir = normalize(light - pointOnSurface);
-
-            float diff = max(dot(normalize(lightDir), normal), 0.0); // diffuse term intesity
-
-            float3 diffuse = diffuseIntensity * diff * float3(1,1,1) * float3(1,1,1);
-
-            float3 viewDir = normalize(ray.origin - pointOnSurface);
-            float3 reflectDir = reflect(-normalize(lightDir),normal);
-            float spec = pow(max(dot(viewDir,reflectDir),0.0),specularIntensity); // specular term dot is the cosine of the angle specular intesity is the shininess shininess changes the frequency of the cosine
-            float3 specular =  spec * float3(0,1,0) * float3(1,0,1);
-            float3 Ligthing = ambientColor;
-            Ligthing += (diffuse +specular);
-
-            //Result[id.xy] = float4(clamp(rayDst/80,0,1).xxx,1);
-            Result[id.xy] = float4(Ligthing,1);
+            if(hasLight){
+                float3 Ligthing = ADS(ray, dst, col);
+                Result[id.xy] = float4(Ligthing,1);
+            }
+            else if(showDepth){
+                Result[id.xy] = float4(clamp(rayDst/80,0,1).xxx,1); //This is depth
+            }
+            else{
+                Result[id.xy] = float4(col,1);
+            }
 
             break;
         }
