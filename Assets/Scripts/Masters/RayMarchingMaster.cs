@@ -8,30 +8,40 @@ using static UnityEngine.GraphicsBuffer;
 public class RayMarchingMaster : MonoBehaviour
 {
     [SerializeField] ComputeShader m_ComputeShader;
+
     [Range(-0.5f,0.5f)]
     [SerializeField] float smoothing;
     [SerializeField] float ambientIntensity;
     [SerializeField] float diffuseIntensity;
     [SerializeField] float specularIntensity;
 
+    float speed = 0.001f;
+
     private RenderTexture renderTexture;
+    private RenderTexture depthTexture;
     private Camera _camera;
+
     List<ComputeBuffer> deleteComputeBuffers = new List<ComputeBuffer>();
+
     Sphere[] spheres;
     Cube[] cubes;
     Triangle[] triangles;
-    float speed = 0.001f;
+
     private void Awake()
     {
         spheres = GenerateRandomSpheres();
         cubes = GenerateRandomCubes();
         triangles = GenerateRandomTriangles();
         _camera = GetComponent<Camera>();
+        _camera.depthTextureMode = DepthTextureMode.Depth;
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        depthTexture = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
+        depthTexture.enableRandomWrite = true;
+        depthTexture.Create();
     }
 
     void Init()
@@ -168,6 +178,7 @@ public class RayMarchingMaster : MonoBehaviour
 
     void OnRenderImage(RenderTexture src, RenderTexture dest)
     {
+        Graphics.Blit(src,depthTexture);
         Init();
 
         InitRenderTexture();
@@ -175,14 +186,14 @@ public class RayMarchingMaster : MonoBehaviour
         SetParameters();
 
         m_ComputeShader.SetTexture(0, "Source", src);
-
+        m_ComputeShader.SetTexture(0, "_DepthTexture", depthTexture);
         m_ComputeShader.SetTexture(0, "Result", renderTexture);
 
         int threadGroupsX = Mathf.CeilToInt(_camera.pixelWidth / 32.0f);
         int threadGroupsY = Mathf.CeilToInt(_camera.pixelHeight / 32.0f);
         m_ComputeShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
-        // Display the result texture
+        // Display the result texture 
         Graphics.Blit(renderTexture, dest);
         for (int i = 0; i < deleteComputeBuffers.Count; i++)
         {
