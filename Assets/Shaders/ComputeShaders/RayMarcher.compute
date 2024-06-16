@@ -72,9 +72,9 @@ int _NumCubes;
 
 RWStructuredBuffer<Cube> Cubes;
 
-int _NumTriangles;
+//int _NumTriangles;
 
-RWStructuredBuffer<Triangle> Triangles;
+//RWStructuredBuffer<Triangle> Triangles;
 
 
 //Ray's
@@ -208,12 +208,12 @@ float4 SDFScene(float3 pos){
         sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToCube, cube.color, smoothing);
    }
 
-    for(int k = 0; k < _NumTriangles; k++){
-        Triangle tr = Triangles[k];
-        float distanceToTriangle = SDFTriangle(tr.position, tr.vertex1, tr.vertex2, tr.vertex3);
+    //for(int k = 0; k < _NumTriangles; k++){
+      //  Triangle tr = Triangles[k];
+        //float distanceToTriangle = SDFTriangle(tr.position, tr.vertex1, tr.vertex2, tr.vertex3);
         
         //sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToTriangle, tr.color, smoothing);
-    }
+    //}
 
     return float4(sceneResult.color,sceneResult.distance);
 }

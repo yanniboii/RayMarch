@@ -17,6 +17,10 @@ public class RayMarchingMaster : MonoBehaviour
     [SerializeField] bool hasLight;
     [SerializeField] bool showDepth;
 
+    [SerializeField] int SphereAmount;
+    [SerializeField] int CubeAmount;
+
+
     float speed = 0.001f;
 
     private RenderTexture renderTexture;
@@ -25,15 +29,50 @@ public class RayMarchingMaster : MonoBehaviour
 
     List<ComputeBuffer> deleteComputeBuffers = new List<ComputeBuffer>();
 
-    Sphere[] spheres;
-    Cube[] cubes;
-    Triangle[] triangles;
+    List<Sphere> spheres = new List<Sphere>();
+    List<Cube> cubes = new List<Cube>();
+    //Triangle[] triangles;
 
     private void Awake()
     {
-        spheres = GenerateRandomSpheres();
-        cubes = GenerateRandomCubes();
-        triangles = GenerateRandomTriangles();
+        Random.InitState(0);
+        Vector3 pos = Vector3.zero;
+        for(int i = 0; i < SphereAmount; i++)
+        {
+            Sphere sphere = new Sphere();
+            sphere.position = pos;
+            sphere.radius = 1;
+            sphere.color = new Vector3(Random.Range(0, 1f), Random.Range(0, 1f), Random.Range(0, 1f));
+            spheres.Add(sphere);
+            if (pos.x != 75)
+            {
+                pos += new Vector3(5, 0, 0);
+            }
+            else
+            {
+                pos.y += 5;
+                pos.x = 0;
+            }
+        }
+        for (int i = 0; i < CubeAmount; i++)
+        {
+            Cube cube = new Cube();
+            cube.position = pos;
+            cube.bounds = new Vector3(1,1,1);
+            cube.color = new Vector3(Random.Range(0, 1f), Random.Range(0, 1f), Random.Range(0, 1f));
+            cubes.Add(cube);
+            if (pos.x != 75)
+            {
+                pos += new Vector3(5, 0, 0);
+            }
+            else
+            {
+                pos.y += 5;
+            }
+        }
+        //spheres = GenerateRandomSpheres();
+        //cubes = GenerateRandomCubes();
+        //triangles = GenerateRandomTriangles();
         _camera = GetComponent<Camera>();
         _camera.depthTextureMode = DepthTextureMode.Depth;
     }
@@ -58,30 +97,30 @@ public class RayMarchingMaster : MonoBehaviour
 
     void CreateScene()
     {
-        spheres[0].position = new Vector3(0, 3, 0);
-        spheres[0].radius = 1;
-        spheres[0].color = new Vector3(1, 0, 0);
+        m_ComputeShader.SetInt("_NumSpheres", spheres.Count);
 
-        ComputeBuffer sphereBuffer = new ComputeBuffer(spheres.Length, Sphere.GetSize());
+        m_ComputeShader.SetInt("_NumCubes", cubes.Count);
+
+        if (SphereAmount > 0)
+        {
+            ComputeBuffer sphereBuffer = new ComputeBuffer(spheres.Count, Sphere.GetSize());
             sphereBuffer.SetData(spheres);
-            m_ComputeShader.SetInt("_NumSpheres", spheres.Length);
             m_ComputeShader.SetBuffer(0, "Spheres", sphereBuffer);
             deleteComputeBuffers.Add(sphereBuffer);
-        
+        }
+        if(CubeAmount > 0)
+        {
+            ComputeBuffer cubeBuffer = new ComputeBuffer(cubes.Count, Cube.GetSize());
+            cubeBuffer.SetData(cubes);
+            m_ComputeShader.SetBuffer(0, "Cubes", cubeBuffer);
+            deleteComputeBuffers.Add(cubeBuffer);
+        }
 
-
-
-        ComputeBuffer cubeBuffer = new ComputeBuffer(cubes.Length, Cube.GetSize());
-        cubeBuffer.SetData(cubes);
-        m_ComputeShader.SetInt("_NumCubes", cubes.Length);
-        m_ComputeShader.SetBuffer(0, "Cubes", cubeBuffer);
-        deleteComputeBuffers.Add(cubeBuffer);
-
-        ComputeBuffer trianlgeBuffer = new ComputeBuffer(triangles.Length, Triangle.GetSize());
-        trianlgeBuffer.SetData(triangles);
-        m_ComputeShader.SetInt("_NumTriangles", triangles.Length);
-        m_ComputeShader.SetBuffer(0, "Triangles", trianlgeBuffer);
-        deleteComputeBuffers.Add(trianlgeBuffer);
+        //ComputeBuffer trianlgeBuffer = new ComputeBuffer(triangles.Length, Triangle.GetSize());
+        //trianlgeBuffer.SetData(triangles);
+        //m_ComputeShader.SetInt("_NumTriangles", triangles.Length);
+        //m_ComputeShader.SetBuffer(0, "Triangles", trianlgeBuffer);
+        //deleteComputeBuffers.Add(trianlgeBuffer);
 
 
         m_ComputeShader.SetBool("hasLight", hasLight);
@@ -126,19 +165,19 @@ public class RayMarchingMaster : MonoBehaviour
         return cubes;
     }
 
-    Triangle[] GenerateRandomTriangles()
-    {
-        Triangle[] triangles = new Triangle[12];
-        for (int i = 0; i < triangles.Length - 1; i++)
-        {
-            triangles[i].position = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
-            triangles[i].vertex1 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
-            triangles[i].vertex2 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
-            triangles[i].vertex3 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
-            triangles[i].color = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-        }
-        return triangles;
-    }
+    //Triangle[] GenerateRandomTriangles()
+    //{
+    //    Triangle[] triangles = new Triangle[12];
+    //    for (int i = 0; i < triangles.Length - 1; i++)
+    //    {
+    //        triangles[i].position = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+    //        triangles[i].vertex1 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+    //        triangles[i].vertex2 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+    //        triangles[i].vertex3 = new Vector3(Random.Range(0f, 4f), Random.Range(0f, 4f), Random.Range(0f, 4f));
+    //        triangles[i].color = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+    //    }
+    //    return triangles;
+    //}
 
     void InitRenderTexture()
     {
@@ -165,18 +204,20 @@ public class RayMarchingMaster : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (spheres.Length > 1)
-        {
-            if (spheres[1].position.x > 3)
-            {
-                speed = -speed;
-            }
-            if (spheres[1].position.x < -2)
-            {
-                speed = -speed;
-            }
-            spheres[1].position += new Vector3(speed, 0, 0);
-        }
+        //if (spheres.Count > 1)
+        //{
+        //    if (spheres[1].position.x > 3)
+        //    {
+        //        speed = -speed;
+        //    }
+        //    if (spheres[1].position.x < -2)
+        //    {
+        //        speed = -speed;
+        //    }
+        //    Sphere sphere = spheres[1];
+        //    sphere.position += new Vector3(speed, 0, 0);
+        //    spheres[1] = sphere;
+        //}
 
     }
 
