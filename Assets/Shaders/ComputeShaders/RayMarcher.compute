@@ -72,9 +72,9 @@ int _NumCubes;
 
 RWStructuredBuffer<Cube> Cubes;
 
-//int _NumTriangles;
+int _NumTriangles;
 
-//RWStructuredBuffer<Triangle> Triangles;
+RWStructuredBuffer<Triangle> Triangles;
 
 
 //Ray's
@@ -208,13 +208,13 @@ float4 SDFScene(float3 pos){
         sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToCube, cube.color, smoothing);
    }
 
-    //for(int k = 0; k < _NumTriangles; k++){
-      //  Triangle tr = Triangles[k];
-        //float distanceToTriangle = SDFTriangle(tr.position, tr.vertex1, tr.vertex2, tr.vertex3);
+    for(int k = 0; k < _NumTriangles; k++){
+        Triangle tr = Triangles[k];
+        float distanceToTriangle = SDFTriangle(tr.position, tr.vertex1, tr.vertex2, tr.vertex3);
         
         //sceneResult = sminRootWithColor(sceneResult.distance, sceneResult.color, distanceToTriangle, tr.color, smoothing);
-    //}
-
+    }
+    
     return float4(sceneResult.color,sceneResult.distance);
 }
 
@@ -241,23 +241,29 @@ return normalize(pos2 - pos3);
 float3 ADS(Ray ray, float dst, float3 col){
         float3 pointOnSurface = ray.origin + ray.direction *dst;
 
-        float3 ambientColor = col * ambientIntensity;
+        //float3 ambientColor = col * ambientIntensity;
         float3 normal = compNormT(pointOnSurface-ray.direction*epsilon);
 
 
-        float3 lightDir = normalize(light - pointOnSurface);
+        //float3 lightDir = normalize(light - pointOnSurface);
 
-        float diff = max(dot(normalize(lightDir), normal), 0.0); // diffuse term intesity
+        //float diff = max(dot(normalize(lightDir), normal), 0.0); // diffuse term intesity
+        //float3 diffuse = diffuseIntensity * diff * float3(1,1,1) * float3(1,1,1);
 
-        float3 diffuse = diffuseIntensity * diff * float3(1,1,1) * float3(1,1,1);
+        //float3 viewDir = normalize(ray.origin - pointOnSurface);
+        //float3 reflectDir = reflect(-normalize(lightDir),normal);
+        //float spec = pow(max(dot(viewDir,reflectDir),0.0),specularIntensity); // specular term dot is the cosine of the angle specular intesity is the shininess shininess changes the frequency of the cosine
+        //float3 specular =  spec * float3(0,1,0) * float3(1,0,1);
 
-        float3 viewDir = normalize(ray.origin - pointOnSurface);
-        float3 reflectDir = reflect(-normalize(lightDir),normal);
-        float spec = pow(max(dot(viewDir,reflectDir),0.0),specularIntensity); // specular term dot is the cosine of the angle specular intesity is the shininess shininess changes the frequency of the cosine
-        float3 specular =  spec * float3(0,1,0) * float3(1,0,1);
-        float3 Ligthing = ambientColor;
-        Ligthing += (diffuse +specular);
-        return Ligthing;
+        //float3 Ligthing = ambientColor;
+        //Ligthing += (diffuse +specular);
+        return normal;
+}
+
+//Repetition
+//////////////////////////////////////////////////////////////////////////////////
+float repeated(float3 pos){
+    return SDFScene(pos.x);
 }
 
 [numthreads(32,32,1)]

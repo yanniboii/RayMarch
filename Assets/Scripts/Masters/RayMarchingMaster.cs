@@ -46,11 +46,11 @@ public class RayMarchingMaster : MonoBehaviour
             spheres.Add(sphere);
             if (pos.x != 75)
             {
-                pos += new Vector3(5, 0, 0);
+                pos += new Vector3(2, 0, 0);
             }
             else
             {
-                pos.y += 5;
+                pos.y += 2;
                 pos.x = 0;
             }
         }
@@ -63,11 +63,12 @@ public class RayMarchingMaster : MonoBehaviour
             cubes.Add(cube);
             if (pos.x != 75)
             {
-                pos += new Vector3(5, 0, 0);
+                pos += new Vector3(2, 0, 0);
             }
             else
             {
-                pos.y += 5;
+                pos.y += 2;
+                pos.x = 0;
             }
         }
         //spheres = GenerateRandomSpheres();
